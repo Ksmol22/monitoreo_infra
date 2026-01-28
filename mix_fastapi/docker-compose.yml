@@ -1,0 +1,141 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  db:
+    image: postgres:15-alpine
+    container_name: monitoreo_db_fastapi
+    environment:
+      POSTGRES_DB: monitoreo_infra
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - monitoreo_network
+
+  # Redis for Celery
+  redis:
+    image: redis:7-alpine
+    container_name: monitoreo_redis_fastapi
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - monitoreo_network
+
+  # FastAPI Backend
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: monitoreo_backend_fastapi
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://postgres:postgres@db:5432/monitoreo_infra
+      - REDIS_URL=redis://redis:6379/0
+      - SECRET_KEY=your-secret-key-change-in-production
+      - DEBUG=True
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - monitoreo_network
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  # Celery Worker
+  celery_worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: monitoreo_celery_worker_fastapi
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://postgres:postgres@db:5432/monitoreo_infra
+      - REDIS_URL=redis://redis:6379/0
+      - SECRET_KEY=your-secret-key-change-in-production
+    volumes:
+      - ./backend:/app
+    depends_on:
+      - db
+      - redis
+      - backend
+    networks:
+      - monitoreo_network
+    command: celery -A app.celery_app worker --loglevel=info
+
+  # Celery Beat (Scheduler)
+  celery_beat:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: monitoreo_celery_beat_fastapi
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://postgres:postgres@db:5432/monitoreo_infra
+      - REDIS_URL=redis://redis:6379/0
+      - SECRET_KEY=your-secret-key-change-in-production
+    volumes:
+      - ./backend:/app
+    depends_on:
+      - db
+      - redis
+      - backend
+    networks:
+      - monitoreo_network
+    command: celery -A app.celery_app beat --loglevel=info
+
+  # Vue 3 Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: monitoreo_frontend_fastapi
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      - VITE_API_URL=http://localhost:8000/api
+    depends_on:
+      - backend
+    networks:
+      - monitoreo_network
+    command: npm run dev -- --host 0.0.0.0
+
+  # Nginx Reverse Proxy
+  nginx:
+    image: nginx:alpine
+    container_name: monitoreo_nginx_fastapi
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - frontend
+      - backend
+    networks:
+      - monitoreo_network
+
+volumes:
+  postgres_data:
+
+networks:
+  monitoreo_network:
+    driver: bridge

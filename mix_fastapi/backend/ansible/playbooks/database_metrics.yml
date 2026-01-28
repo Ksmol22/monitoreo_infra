@@ -1,0 +1,100 @@
+---
+# Database Metrics Collection Playbook
+# Collects metrics from PostgreSQL and MySQL databases
+
+- name: Collect Database Metrics
+  hosts: databases
+  gather_facts: yes
+  
+  tasks:
+    - name: Get system ID from API
+      uri:
+        url: "{{ api_url }}/systems/?name={{ inventory_hostname }}"
+        method: GET
+        return_content: yes
+      register: system_response
+      delegate_to: localhost
+      changed_when: false
+    
+    - name: Register system if not exists
+      uri:
+        url: "{{ api_url }}/systems/"
+        method: POST
+        body_format: json
+        body:
+          name: "{{ inventory_hostname }}"
+          type: "database"
+          ip_address: "{{ ansible_host }}"
+          version: "{{ db_type | default('postgresql') }}"
+          ansible_user: "{{ ansible_user }}"
+          ansible_port: "{{ ansible_port }}"
+          ansible_connection: "{{ ansible_connection }}"
+        status_code: [201, 400]
+      delegate_to: localhost
+      when: system_response.json | length == 0
+      register: register_response
+    
+    - name: Set system_id fact
+      set_fact:
+        system_id: "{{ (system_response.json[0].id if system_response.json | length > 0 else register_response.json.id) | int }}"
+    
+    - name: Get PostgreSQL metrics
+      shell: |
+        echo "SELECT 
+          ROUND((sum(heap_blks_hit) / NULLIF(sum(heap_blks_hit + heap_blks_read), 0) * 100)::numeric, 2) as cache_hit_ratio,
+          ROUND((pg_database_size(current_database()) / (1024.0 * 1024.0))::numeric, 2) as db_size_mb
+        FROM pg_statio_user_tables;" | psql -t -A -F',' | head -1
+      register: pg_metrics
+      when: db_type | default('postgresql') == 'postgresql'
+      changed_when: false
+    
+    - name: Set PostgreSQL metrics
+      set_fact:
+        cpu_usage: "{{ pg_metrics.stdout.split(',')[0] | default('0') | float }}"
+        disk_usage: "{{ (pg_metrics.stdout.split(',')[1] | default('0') | float / 10) | round(2) }}"
+        memory_usage: 50.0
+      when: db_type | default('postgresql') == 'postgresql'
+    
+    - name: Get generic system metrics
+      shell: |
+        CPU=$(top -bn1 | grep "Cpu(s)" | awk '{print $2}' | cut -d'%' -f1)
+        MEM=$(free | grep Mem | awk '{printf "%.2f", ($3/$2) * 100.0}')
+        DISK=$(df -h / | tail -1 | awk '{print $5}' | sed 's/%//')
+        echo "$CPU,$MEM,$DISK"
+      register: sys_metrics
+      changed_when: false
+    
+    - name: Set system metrics
+      set_fact:
+        cpu_usage: "{{ sys_metrics.stdout.split(',')[0] | float }}"
+        memory_usage: "{{ sys_metrics.stdout.split(',')[1] | float }}"
+        disk_usage: "{{ sys_metrics.stdout.split(',')[2] | float }}"
+      when: db_type is not defined or db_type != 'postgresql'
+    
+    - name: Send metrics to API
+      uri:
+        url: "{{ api_url }}/metrics/"
+        method: POST
+        body_format: json
+        body:
+          system_id: "{{ system_id }}"
+          cpu_usage: "{{ cpu_usage }}"
+          memory_usage: "{{ memory_usage }}"
+          disk_usage: "{{ disk_usage }}"
+          network_in: 0
+          network_out: 0
+        status_code: 201
+      delegate_to: localhost
+    
+    - name: Create log entry
+      uri:
+        url: "{{ api_url }}/logs/"
+        method: POST
+        body_format: json
+        body:
+          system_id: "{{ system_id }}"
+          level: "info"
+          message: "Database metrics collected successfully"
+          source: "ansible"
+        status_code: 201
+      delegate_to: localhost

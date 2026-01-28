@@ -1,0 +1,90 @@
+---
+# Linux Metrics Collection Playbook
+# Collects CPU, Memory, Disk, and Network metrics from Linux servers
+
+- name: Collect Linux System Metrics
+  hosts: linux
+  gather_facts: yes
+  
+  tasks:
+    - name: Get system ID from API
+      uri:
+        url: "{{ api_url }}/systems/?name={{ inventory_hostname }}"
+        method: GET
+        return_content: yes
+      register: system_response
+      delegate_to: localhost
+      changed_when: false
+    
+    - name: Register system if not exists
+      uri:
+        url: "{{ api_url }}/systems/"
+        method: POST
+        body_format: json
+        body:
+          name: "{{ inventory_hostname }}"
+          type: "linux"
+          ip_address: "{{ ansible_host }}"
+          version: "{{ ansible_distribution }} {{ ansible_distribution_version }}"
+          ansible_user: "{{ ansible_user }}"
+          ansible_port: "{{ ansible_port }}"
+          ansible_connection: "{{ ansible_connection }}"
+        status_code: [201, 400]
+      delegate_to: localhost
+      when: system_response.json | length == 0
+      register: register_response
+    
+    - name: Set system_id fact
+      set_fact:
+        system_id: "{{ (system_response.json[0].id if system_response.json | length > 0 else register_response.json.id) | int }}"
+    
+    - name: Get CPU usage
+      shell: top -bn1 | grep "Cpu(s)" | awk '{print $2}' | cut -d'%' -f1
+      register: cpu_usage
+      changed_when: false
+    
+    - name: Get Memory usage
+      shell: free | grep Mem | awk '{printf "%.2f", ($3/$2) * 100.0}'
+      register: memory_usage
+      changed_when: false
+    
+    - name: Get Disk usage
+      shell: df -h / | tail -1 | awk '{print $5}' | sed 's/%//'
+      register: disk_usage
+      changed_when: false
+    
+    - name: Get Network stats (in KB)
+      shell: |
+        RX=$(cat /sys/class/net/eth0/statistics/rx_bytes 2>/dev/null || echo 0)
+        TX=$(cat /sys/class/net/eth0/statistics/tx_bytes 2>/dev/null || echo 0)
+        echo "$((RX/1024)) $((TX/1024))"
+      register: network_stats
+      changed_when: false
+    
+    - name: Send metrics to API
+      uri:
+        url: "{{ api_url }}/metrics/"
+        method: POST
+        body_format: json
+        body:
+          system_id: "{{ system_id }}"
+          cpu_usage: "{{ cpu_usage.stdout | float }}"
+          memory_usage: "{{ memory_usage.stdout | float }}"
+          disk_usage: "{{ disk_usage.stdout | float }}"
+          network_in: "{{ network_stats.stdout.split()[0] | float }}"
+          network_out: "{{ network_stats.stdout.split()[1] | float }}"
+        status_code: 201
+      delegate_to: localhost
+    
+    - name: Create log entry
+      uri:
+        url: "{{ api_url }}/logs/"
+        method: POST
+        body_format: json
+        body:
+          system_id: "{{ system_id }}"
+          level: "info"
+          message: "Metrics collected successfully"
+          source: "ansible"
+        status_code: 201
+      delegate_to: localhost

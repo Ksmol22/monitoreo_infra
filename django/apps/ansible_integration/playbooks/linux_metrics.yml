@@ -1,0 +1,89 @@
+---
+# Ansible playbook to collect Linux server metrics
+# This playbook connects to Linux servers and collects:
+# - CPU usage
+# - Memory usage
+# - Disk usage
+# - Network statistics
+
+- name: Collect Linux System Metrics
+  hosts: linux_servers
+  gather_facts: yes
+  vars:
+    django_api_host: "{{ lookup('env', 'DJANGO_API_HOST') | default('web', true) }}"
+  
+  tasks:
+    - name: Get CPU usage percentage
+      shell: top -bn1 | grep "Cpu(s)" | sed "s/.*, *\([0-9.]*\)%* id.*/\1/" | awk '{print 100 - $1}'
+      register: cpu_usage
+      changed_when: false
+      failed_when: false
+    
+    - name: Get memory usage percentage
+      shell: free | grep Mem | awk '{print ($3/$2) * 100.0}'
+      register: memory_usage
+      changed_when: false
+      failed_when: false
+    
+    - name: Get disk usage percentage
+      shell: df -h / | tail -1 | awk '{print $5}' | sed 's/%//'
+      register: disk_usage
+      changed_when: false
+      failed_when: false
+    
+    - name: Get network statistics (bytes in/out)
+      shell: |
+        cat /proc/net/dev | grep -v "lo:" | grep -v "Inter" | grep -v "face" | head -1 | awk '{print $2,$10}'
+      register: network_stats
+      changed_when: false
+      failed_when: false
+    
+    - name: Get system uptime
+      command: uptime -p
+      register: uptime
+      changed_when: false
+      failed_when: false
+    
+    - name: Display collected metrics
+      debug:
+        msg: |
+          Host: {{ inventory_hostname }}
+          CPU: {{ cpu_usage.stdout | default('N/A') }}%
+          Memory: {{ memory_usage.stdout | default('N/A') }}%
+          Disk: {{ disk_usage.stdout | default('N/A') }}%
+          Network: {{ network_stats.stdout | default('N/A') }}
+          Uptime: {{ uptime.stdout | default('N/A') }}
+    
+    - name: Send metrics to Django API
+      uri:
+        url: "http://{{ django_api_host }}:8000/api/v1/metrics/"
+        method: POST
+        body_format: json
+        headers:
+          Content-Type: "application/json"
+        body:
+          system_id: "{{ hostvars[inventory_hostname].system_id | default(1) }}"
+          cpu_usage: "{{ cpu_usage.stdout | default(0) | float }}"
+          memory_usage: "{{ memory_usage.stdout | default(0) | float }}"
+          disk_usage: "{{ disk_usage.stdout | default(0) | float }}"
+          network_in: "{{ (network_stats.stdout.split()[0] | default(0) | int) / 1024 / 1024 }}"
+          network_out: "{{ (network_stats.stdout.split()[1] | default(0) | int) / 1024 / 1024 }}"
+        status_code: 201
+        timeout: 10
+      delegate_to: localhost
+      ignore_errors: yes
+      when: cpu_usage.stdout is defined
+    
+    - name: Create log entry for successful collection
+      uri:
+        url: "http://{{ django_api_host }}:8000/api/v1/logs/"
+        method: POST
+        body_format: json
+        body:
+          system_id: "{{ hostvars[inventory_hostname].system_id | default(1) }}"
+          level: "info"
+          message: "Metrics collected successfully from {{ inventory_hostname }}"
+          source: "ansible_linux"
+        status_code: 201
+      delegate_to: localhost
+      ignore_errors: yes

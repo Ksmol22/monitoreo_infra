@@ -1,0 +1,37 @@
+# FastAPI and dependencies
+fastapi==0.109.0
+uvicorn[standard]==0.27.0
+pydantic==2.5.3
+pydantic-settings==2.1.0
+
+# Database
+sqlalchemy==2.0.25
+psycopg2-binary==2.9.9
+alembic==1.13.1
+
+# Async support
+asyncpg==0.29.0
+aiofiles==23.2.1
+
+# Task queue
+celery==5.3.6
+redis==5.0.1
+
+# Ansible
+ansible-runner==2.3.4
+ansible==9.1.0
+
+# Security
+passlib[bcrypt]==1.7.4
+python-jose[cryptography]==3.3.0
+python-multipart==0.0.6
+
+# CORS
+fastapi-cors==0.0.6
+
+# Monitoring
+prometheus-client==0.19.0
+
+# Utils
+python-dateutil==2.8.2
+pytz==2023.3

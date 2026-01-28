@@ -1,0 +1,126 @@
+---
+# Ansible playbook to collect database metrics
+# Supports PostgreSQL, MySQL, and Oracle
+
+- name: Collect Database Metrics
+  hosts: databases
+  gather_facts: yes
+  vars:
+    django_api_host: "{{ lookup('env', 'DJANGO_API_HOST') | default('web', true) }}"
+  
+  tasks:
+    # PostgreSQL metrics
+    - name: Get PostgreSQL metrics
+      postgresql_query:
+        login_host: "{{ ansible_host }}"
+        login_user: "{{ ansible_user }}"
+        login_password: "{{ ansible_password | default(omit) }}"
+        port: "{{ db_port | default(5432) }}"
+        db: postgres
+        query: |
+          SELECT
+            (SELECT count(*) FROM pg_stat_activity WHERE state = 'active')::int as active_connections,
+            (SELECT pg_database_size(current_database()))::bigint as db_size_bytes,
+            (SELECT CASE WHEN sum(blks_hit + blks_read) > 0 
+                    THEN (sum(blks_hit)*100/sum(blks_hit + blks_read))::numeric(5,2)
+                    ELSE 0 END 
+             FROM pg_stat_database) as cache_hit_ratio,
+            (SELECT count(*) FROM pg_stat_activity) as total_connections
+      register: pg_metrics
+      when: db_type == "postgresql"
+      failed_when: false
+      delegate_to: localhost
+    
+    - name: Calculate PostgreSQL disk usage percentage
+      set_fact:
+        pg_disk_usage: "{{ ((pg_metrics.query_result[0].db_size_bytes | int) / (1024*1024*1024*100)) * 100 }}"
+      when: 
+        - db_type == "postgresql"
+        - pg_metrics.query_result is defined
+    
+    # MySQL metrics
+    - name: Get MySQL metrics
+      community.mysql.mysql_query:
+        login_host: "{{ ansible_host }}"
+        login_user: "{{ ansible_user }}"
+        login_password: "{{ ansible_password | default(omit) }}"
+        login_port: "{{ db_port | default(3306) }}"
+        query: 
+          - SELECT VARIABLE_VALUE as connections FROM information_schema.GLOBAL_STATUS WHERE VARIABLE_NAME='Threads_connected'
+          - SELECT ROUND(SUM(data_length + index_length) / 1024 / 1024, 2) as size_mb FROM information_schema.TABLES
+      register: mysql_metrics
+      when: db_type == "mysql"
+      failed_when: false
+      delegate_to: localhost
+    
+    # Oracle metrics (requires cx_Oracle)
+    - name: Get Oracle metrics
+      shell: |
+        echo "SELECT count(*) FROM v\$session WHERE status='ACTIVE';" | sqlplus -s {{ ansible_user }}/{{ ansible_password }}@{{ ansible_host }}:{{ db_port }}/{{ oracle_sid | default('ORCL') }}
+      register: oracle_metrics
+      when: db_type == "oracle"
+      failed_when: false
+      delegate_to: localhost
+    
+    - name: Display database metrics
+      debug:
+        msg: |
+          Database: {{ inventory_hostname }}
+          Type: {{ db_type }}
+          PostgreSQL Metrics: {{ pg_metrics.query_result | default('N/A') }}
+          MySQL Metrics: {{ mysql_metrics.query_result | default('N/A') }}
+          Oracle Metrics: {{ oracle_metrics.stdout | default('N/A') }}
+    
+    # Send PostgreSQL metrics
+    - name: Send PostgreSQL metrics to Django API
+      uri:
+        url: "http://{{ django_api_host }}:8000/api/v1/metrics/"
+        method: POST
+        body_format: json
+        body:
+          system_id: "{{ hostvars[inventory_hostname].system_id | default(3) }}"
+          cpu_usage: "{{ pg_metrics.query_result[0].cache_hit_ratio | default(0) }}"
+          memory_usage: "{{ (pg_metrics.query_result[0].total_connections | default(0) | int) * 2 }}"
+          disk_usage: "{{ pg_disk_usage | default(0) | float }}"
+          network_in: "{{ pg_metrics.query_result[0].active_connections | default(0) }}"
+          network_out: 0
+        status_code: 201
+      delegate_to: localhost
+      ignore_errors: yes
+      when: 
+        - db_type == "postgresql"
+        - pg_metrics.query_result is defined
+    
+    # Send MySQL metrics
+    - name: Send MySQL metrics to Django API
+      uri:
+        url: "http://{{ django_api_host }}:8000/api/v1/metrics/"
+        method: POST
+        body_format: json
+        body:
+          system_id: "{{ hostvars[inventory_hostname].system_id | default(3) }}"
+          cpu_usage: 0
+          memory_usage: "{{ mysql_metrics.query_result[0][0].connections | default(0) | int }}"
+          disk_usage: "{{ mysql_metrics.query_result[1][0].size_mb | default(0) | float }}"
+          network_in: 0
+          network_out: 0
+        status_code: 201
+      delegate_to: localhost
+      ignore_errors: yes
+      when: 
+        - db_type == "mysql"
+        - mysql_metrics.query_result is defined
+    
+    - name: Create log entry
+      uri:
+        url: "http://{{ django_api_host }}:8000/api/v1/logs/"
+        method: POST
+        body_format: json
+        body:
+          system_id: "{{ hostvars[inventory_hostname].system_id | default(3) }}"
+          level: "info"
+          message: "Database metrics collected from {{ inventory_hostname }} ({{ db_type }})"
+          source: "ansible_database"
+        status_code: 201
+      delegate_to: localhost
+      ignore_errors: yes

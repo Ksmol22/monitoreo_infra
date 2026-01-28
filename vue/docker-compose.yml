@@ -1,0 +1,128 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: monitoreo-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: monitoreo_infra
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - monitoreo-network
+
+  # Systems Microservice
+  systems-service:
+    build:
+      context: ./backend/services/systems
+      dockerfile: Dockerfile
+    container_name: systems-service
+    environment:
+      NODE_ENV: production
+      PORT: 4001
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/monitoreo_infra
+      ALLOWED_ORIGINS: http://localhost:3000
+    ports:
+      - "4001:4001"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - monitoreo-network
+    restart: unless-stopped
+
+  # Metrics Microservice
+  metrics-service:
+    build:
+      context: ./backend/services/metrics
+      dockerfile: Dockerfile
+    container_name: metrics-service
+    environment:
+      NODE_ENV: production
+      PORT: 4002
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/monitoreo_infra
+      ALLOWED_ORIGINS: http://localhost:3000
+    ports:
+      - "4002:4002"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - monitoreo-network
+    restart: unless-stopped
+
+  # Logs Microservice
+  logs-service:
+    build:
+      context: ./backend/services/logs
+      dockerfile: Dockerfile
+    container_name: logs-service
+    environment:
+      NODE_ENV: production
+      PORT: 4003
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/monitoreo_infra
+      ALLOWED_ORIGINS: http://localhost:3000
+    ports:
+      - "4003:4003"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - monitoreo-network
+    restart: unless-stopped
+
+  # API Gateway
+  api-gateway:
+    build:
+      context: ./backend/api-gateway
+      dockerfile: Dockerfile
+    container_name: api-gateway
+    environment:
+      NODE_ENV: production
+      PORT: 4000
+      SYSTEMS_SERVICE_URL: http://systems-service:4001
+      METRICS_SERVICE_URL: http://metrics-service:4002
+      LOGS_SERVICE_URL: http://logs-service:4003
+      ALLOWED_ORIGINS: http://localhost:3000
+    ports:
+      - "4000:4000"
+    depends_on:
+      - systems-service
+      - metrics-service
+      - logs-service
+    networks:
+      - monitoreo-network
+    restart: unless-stopped
+
+  # Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: monitoreo-frontend
+    environment:
+      NODE_ENV: production
+    ports:
+      - "3000:80"
+    depends_on:
+      - api-gateway
+    networks:
+      - monitoreo-network
+    restart: unless-stopped
+
+networks:
+  monitoreo-network:
+    driver: bridge
+
+volumes:
+  postgres_data:

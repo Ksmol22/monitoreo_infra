@@ -1,0 +1,21 @@
+{
+  "name": "monitoreo-infra-root",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "install:all": "npm install && cd frontend && npm install && cd ../backend/api-gateway && npm install && cd ../shared && npm install && cd ../services/systems && npm install && cd ../metrics && npm install && cd ../logs && npm install",
+    "dev:frontend": "cd frontend && npm run dev",
+    "dev:gateway": "cd backend/api-gateway && npm run dev",
+    "dev:systems": "cd backend/services/systems && npm run dev",
+    "dev:metrics": "cd backend/services/metrics && npm run dev",
+    "dev:logs": "cd backend/services/logs && npm run dev",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "docker:build": "docker-compose build",
+    "docker:logs": "docker-compose logs -f",
+    "docker:restart": "docker-compose restart"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0"
+  }
+}
