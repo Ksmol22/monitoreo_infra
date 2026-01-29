@@ -84,3 +84,29 @@ htmlcov/
 .coverage.*
 coverage.xml
 *.cover
+
+
+PROMPT ===== ESTADO BASE DE DATOS =====
+SELECT NAME, OPEN_MODE, DATABASE_ROLE, LOG_MODE FROM V$DATABASE;
+
+PROMPT ===== ESTADO INSTANCIA =====
+SELECT INSTANCE_NAME, STATUS, DATABASE_STATUS, STARTUP_TIME FROM V$INSTANCE;
+
+PROMPT ===== TAMANO TOTAL DB (GB) =====
+SELECT ROUND(SUM(BYTES)/1024/1024/1024,2) TOTAL_GB FROM DBA_DATA_FILES;
+
+PROMPT ===== USO TABLESPACES =====
+SELECT 
+    df.tablespace_name,
+    ROUND(df.total_mb,2) total_mb,
+    ROUND(fs.free_mb,2) free_mb,
+    ROUND(((df.total_mb - fs.free_mb)/df.total_mb)*100,2) pct_used
+FROM
+(SELECT tablespace_name, SUM(bytes)/1024/1024 total_mb FROM dba_data_files GROUP BY tablespace_name) df
+JOIN
+(SELECT tablespace_name, SUM(bytes)/1024/1024 free_mb FROM dba_free_space GROUP BY tablespace_name) fs
+ON df.tablespace_name = fs.tablespace_name
+ORDER BY pct_used DESC;
+
+PROMPT ===== SESIONES =====
+SELECT STATUS, COUNT(*) TOTAL FROM V$SESSION GROUP BY STATUS;
