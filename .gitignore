@@ -110,3 +110,37 @@ ORDER BY pct_used DESC;
 
 PROMPT ===== SESIONES =====
 SELECT STATUS, COUNT(*) TOTAL FROM V$SESSION GROUP BY STATUS;
+
+
+
+sql 
+
+
+PRINT '===== ESTADO BASES ====='
+SELECT name, state_desc, recovery_model_desc FROM sys.databases;
+
+PRINT '===== INSTANCIA ====='
+SELECT @@SERVERNAME Server, SERVERPROPERTY('ProductVersion') Version;
+
+PRINT '===== UPTIME ====='
+SELECT sqlserver_start_time FROM sys.dm_os_sys_info;
+
+PRINT '===== TAMANO BASES ====='
+SELECT DB_NAME(database_id), SUM(size)*8/1024 Size_MB
+FROM sys.master_files
+GROUP BY database_id;
+
+PRINT '===== MEMORIA ====='
+SELECT total_physical_memory_kb/1024 TotalRAM_MB,
+       sqlserver_committed_kb/1024 SQL_Used_MB
+FROM sys.dm_os_sys_memory;
+
+PRINT '===== SESIONES ====='
+SELECT status, COUNT(*) FROM sys.dm_exec_sessions GROUP BY status;
+
+PRINT '===== DISCOS ====='
+EXEC xp_fixeddrives;
+
+PRINT '===== SERVICIOS ====='
+SELECT servicename, status_desc FROM sys.dm_server_services;
+
