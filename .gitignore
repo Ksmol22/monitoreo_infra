@@ -144,3 +144,31 @@ EXEC xp_fixeddrives;
 PRINT '===== SERVICIOS ====='
 SELECT servicename, status_desc FROM sys.dm_server_services;
 
+
+postgres 
+
+
+
+\echo '===== ESTADO SERVIDOR ====='
+SELECT version();
+SELECT pg_postmaster_start_time(), now() - pg_postmaster_start_time() AS uptime;
+
+\echo '===== TAMANO BASES ====='
+SELECT datname, pg_size_pretty(pg_database_size(datname))
+FROM pg_database
+ORDER BY pg_database_size(datname) DESC;
+
+\echo '===== TAMANO TOTAL CLUSTER ====='
+SELECT pg_size_pretty(SUM(pg_database_size(datname))) FROM pg_database;
+
+\echo '===== TABLESPACES ====='
+SELECT spcname, pg_size_pretty(pg_tablespace_size(oid)) FROM pg_tablespace;
+
+\echo '===== SESIONES ====='
+SELECT state, COUNT(*) FROM pg_stat_activity GROUP BY state;
+
+\echo '===== MEMORIA ====='
+SHOW shared_buffers;
+SHOW work_mem;
+SHOW effective_cache_size;
+
