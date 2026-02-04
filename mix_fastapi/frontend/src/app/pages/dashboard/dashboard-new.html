@@ -1,0 +1,327 @@
+<div class="min-h-screen bg-white">
+  <!-- Header -->
+  <div class="bg-white border-b border-gray-200">
+    <div class="max-w-[1920px] mx-auto px-8 py-6">
+      <div class="flex items-center justify-between">
+        <div>
+          <h1 class="text-2xl font-semibold text-gray-900">Monitoreo de Infraestructura</h1>
+          <p class="mt-1 text-sm text-gray-500">
+            Actualizado: {{ currentTime | date:'dd/MM/yyyy HH:mm:ss' }}
+          </p>
+        </div>
+        <div class="flex items-center gap-6">
+          <div class="text-right">
+            <p class="text-xs uppercase tracking-wider text-gray-500 font-medium">Estado Global</p>
+            <p class="text-3xl font-light" [class.text-green-600]="healthScore >= 80" 
+               [class.text-yellow-600]="healthScore >= 50 && healthScore < 80"
+               [class.text-red-600]="healthScore < 50">
+              {{ healthScore }}<span class="text-lg text-gray-400">%</span>
+            </p>
+          </div>
+          <button 
+            (click)="openAddDialog()"
+            class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none transition-colors">
+            <svg class="-ml-1 mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+            </svg>
+            Nuevo Sistema
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="max-w-[1920px] mx-auto px-8 py-8">
+    <!-- Loader -->
+    <app-loader *ngIf="isLoading"></app-loader>
+
+    <ng-container *ngIf="!isLoading">
+      <!-- Top Stats Row -->
+      <div class="grid grid-cols-4 gap-px bg-gray-200 mb-8">
+        <!-- Total Systems -->
+        <div class="bg-white p-8">
+          <p class="text-xs uppercase tracking-wider text-gray-500 font-medium mb-2">Total Sistemas</p>
+          <p class="text-4xl font-light text-gray-900">{{ total }}</p>
+        </div>
+
+        <!-- Active Systems -->
+        <div class="bg-white p-8">
+          <p class="text-xs uppercase tracking-wider text-gray-500 font-medium mb-2">Activos</p>
+          <p class="text-4xl font-light text-green-600">{{ online }}</p>
+          <p class="text-xs text-gray-500 mt-2">{{ (online / total * 100) || 0 | number:'1.0-0' }}%</p>
+        </div>
+
+        <!-- Warnings -->
+        <div class="bg-white p-8">
+          <p class="text-xs uppercase tracking-wider text-gray-500 font-medium mb-2">Advertencias</p>
+          <p class="text-4xl font-light text-yellow-600">{{ warnings }}</p>
+          <p class="text-xs text-gray-500 mt-2">{{ (warnings / total * 100) || 0 | number:'1.0-0' }}%</p>
+        </div>
+
+        <!-- Critical -->
+        <div class="bg-white p-8">
+          <p class="text-xs uppercase tracking-wider text-gray-500 font-medium mb-2">Críticos</p>
+          <p class="text-4xl font-light text-red-600">{{ offline }}</p>
+          <p class="text-xs text-gray-500 mt-2">{{ (offline / total * 100) || 0 | number:'1.0-0' }}%</p>
+        </div>
+      </div>
+
+      <!-- Infrastructure Overview -->
+      <div class="grid grid-cols-3 gap-px bg-gray-200 mb-8">
+        <!-- System Distribution -->
+        <div class="bg-white p-8">
+          <h3 class="text-sm uppercase tracking-wider text-gray-500 font-medium mb-6">Distribución por Tipo</h3>
+          
+          <!-- Windows -->
+          <div class="mb-6 cursor-pointer group" [routerLink]="['/windows']">
+            <div class="flex items-center justify-between mb-3">
+              <span class="text-sm text-gray-600 group-hover:text-gray-900">Windows Server</span>
+              <span class="text-2xl font-light text-gray-900">{{ winCount }}</span>
+            </div>
+            <div class="w-full bg-gray-100 h-1">
+              <div class="bg-gray-400 h-1 transition-all" [style.width.%]="(winCount / total * 100) || 0"></div>
+            </div>
+          </div>
+
+          <!-- Linux -->
+          <div class="mb-6 cursor-pointer group" [routerLink]="['/linux']">
+            <div class="flex items-center justify-between mb-3">
+              <span class="text-sm text-gray-600 group-hover:text-gray-900">Linux RHEL</span>
+              <span class="text-2xl font-light text-gray-900">{{ linCount }}</span>
+            </div>
+            <div class="w-full bg-gray-100 h-1">
+              <div class="bg-gray-400 h-1 transition-all" [style.width.%]="(linCount / total * 100) || 0"></div>
+            </div>
+          </div>
+
+          <!-- Database -->
+          <div class="cursor-pointer group" [routerLink]="['/databases']">
+            <div class="flex items-center justify-between mb-3">
+              <span class="text-sm text-gray-600 group-hover:text-gray-900">Bases de Datos</span>
+              <span class="text-2xl font-light text-gray-900">{{ dbCount }}</span>
+            </div>
+            <div class="w-full bg-gray-100 h-1">
+              <div class="bg-gray-400 h-1 transition-all" [style.width.%]="(dbCount / total * 100) || 0"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Metrics -->
+        <div class="bg-white p-8">
+          <h3 class="text-sm uppercase tracking-wider text-gray-500 font-medium mb-6">Métricas Promedio</h3>
+          
+          <div class="space-y-6">
+            <!-- CPU -->
+            <div>
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-xs text-gray-500">CPU</span>
+                <span class="text-sm font-light text-gray-900">{{ avgCpu | number:'1.0-0' }}%</span>
+              </div>
+              <div class="w-full bg-gray-100 h-1">
+                <div class="h-1 transition-all"
+                     [class.bg-green-500]="avgCpu < 70"
+                     [class.bg-yellow-500]="avgCpu >= 70 && avgCpu < 90"
+                     [class.bg-red-500]="avgCpu >= 90"
+                     [style.width.%]="avgCpu"></div>
+              </div>
+            </div>
+
+            <!-- Memory -->
+            <div>
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-xs text-gray-500">Memoria</span>
+                <span class="text-sm font-light text-gray-900">{{ avgMemory | number:'1.0-0' }}%</span>
+              </div>
+              <div class="w-full bg-gray-100 h-1">
+                <div class="h-1 transition-all"
+                     [class.bg-green-500]="avgMemory < 70"
+                     [class.bg-yellow-500]="avgMemory >= 70 && avgMemory < 90"
+                     [class.bg-red-500]="avgMemory >= 90"
+                     [style.width.%]="avgMemory"></div>
+              </div>
+            </div>
+
+            <!-- Disk -->
+            <div>
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-xs text-gray-500">Disco</span>
+                <span class="text-sm font-light text-gray-900">{{ avgDisk | number:'1.0-0' }}%</span>
+              </div>
+              <div class="w-full bg-gray-100 h-1">
+                <div class="h-1 transition-all"
+                     [class.bg-green-500]="avgDisk < 70"
+                     [class.bg-yellow-500]="avgDisk >= 70 && avgDisk < 90"
+                     [class.bg-red-500]="avgDisk >= 90"
+                     [style.width.%]="avgDisk"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Environment Distribution -->
+        <div class="bg-white p-8">
+          <h3 class="text-sm uppercase tracking-wider text-gray-500 font-medium mb-6">Por Ambiente</h3>
+          
+          <div class="space-y-6">
+            <div>
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-xs text-gray-500">Producción</span>
+                <span class="text-sm font-light text-gray-900">{{ prodCount }}</span>
+              </div>
+              <div class="w-full bg-gray-100 h-1">
+                <div class="bg-gray-400 h-1 transition-all" [style.width.%]="(prodCount / total * 100) || 0"></div>
+              </div>
+            </div>
+
+            <div>
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-xs text-gray-500">QA/Staging</span>
+                <span class="text-sm font-light text-gray-900">{{ qaCount }}</span>
+              </div>
+              <div class="w-full bg-gray-100 h-1">
+                <div class="bg-gray-400 h-1 transition-all" [style.width.%]="(qaCount / total * 100) || 0"></div>
+              </div>
+            </div>
+
+            <div>
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-xs text-gray-500">Desarrollo</span>
+                <span class="text-sm font-light text-gray-900">{{ devCount }}</span>
+              </div>
+              <div class="w-full bg-gray-100 h-1">
+                <div class="bg-gray-400 h-1 transition-all" [style.width.%]="(devCount / total * 100) || 0"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- All Systems Overview Table -->
+      <div class="bg-white border border-gray-200">
+        <div class="px-8 py-6 border-b border-gray-200">
+          <h2 class="text-sm uppercase tracking-wider text-gray-500 font-medium">Inventario de Sistemas</h2>
+        </div>
+        
+        <div class="overflow-x-auto">
+          <table class="min-w-full">
+            <thead class="bg-gray-50 border-b border-gray-200">
+              <tr>
+                <th class="px-8 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sistema</th>
+                <th class="px-8 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipo</th>
+                <th class="px-8 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
+                <th class="px-8 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">IP</th>
+                <th class="px-8 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ambiente</th>
+                <th class="px-8 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">CPU</th>
+                <th class="px-8 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Memoria</th>
+                <th class="px-8 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Disco</th>
+              </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-100">
+              <tr *ngFor="let system of systems" class="hover:bg-gray-50 transition-colors">
+                <td class="px-8 py-4">
+                  <div class="flex items-center">
+                    <div class="flex-shrink-0 h-8 w-8 bg-gray-100 flex items-center justify-center">
+                      <svg *ngIf="system.type === 'windows'" class="w-5 h-5 text-gray-600" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M3 5.5L11 3.5V11.5H3V5.5M13 3.5L21 5.5V11.5H13V3.5M3 13.5H11V21.5L3 19.5V13.5M13 13.5H21V19.5L13 21.5V13.5Z" />
+                      </svg>
+                      <svg *ngIf="system.type === 'linux'" class="w-5 h-5 text-gray-600" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12.504 0c-.155 0-.315.008-.48.021-4.226.333-3.105 4.807-3.17 6.298-.076 1.092-.3 1.953-1.05 3.02-.885 1.051-2.127 2.75-2.716 4.521-.278.84-.41 1.705-.41 2.592 0 2.462 1.06 4.68 2.75 6.21 1.78 1.607 4.347 2.597 7.11 2.597s5.33-.99 7.11-2.597c1.69-1.53 2.75-3.748 2.75-6.21 0-.887-.132-1.752-.41-2.592-.589-1.771-1.831-3.47-2.716-4.521-.75-1.067-.974-1.928-1.05-3.02-.065-1.491 1.056-5.965-3.17-6.298-.165-.013-.325-.021-.48-.021z"/>
+                      </svg>
+                      <svg *ngIf="system.type === 'database'" class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" />
+                      </svg>
+                    </div>
+                    <div class="ml-3">
+                      <div class="text-sm font-medium text-gray-900">{{ system.name }}</div>
+                      <div class="text-xs text-gray-500">{{ system.description || 'Sin descripción' }}</div>
+                    </div>
+                  </div>
+                </td>
+                <td class="px-8 py-4 whitespace-nowrap">
+                  <span class="text-xs text-gray-600">
+                    {{ system.type === 'windows' ? 'Windows' : system.type === 'linux' ? 'Linux' : 'Database' }}
+                  </span>
+                </td>
+                <td class="px-8 py-4 whitespace-nowrap">
+                  <app-status-badge [status]="system.status"></app-status-badge>
+                </td>
+                <td class="px-8 py-4 whitespace-nowrap text-xs font-mono text-gray-600">
+                  {{ system.ip_address }}
+                </td>
+                <td class="px-8 py-4 whitespace-nowrap">
+                  <span class="text-xs text-gray-600">
+                    {{ system.environment === 'production' ? 'Producción' : system.environment === 'staging' ? 'QA' : 'Desarrollo' }}
+                  </span>
+                </td>
+                <td class="px-8 py-4 whitespace-nowrap">
+                  <div class="flex items-center gap-2">
+                    <div class="flex-1 w-16">
+                      <div class="w-full bg-gray-100 h-1">
+                        <div class="h-1 transition-all"
+                             [class.bg-green-500]="(system.metrics?.cpu_usage || 0) < 70"
+                             [class.bg-yellow-500]="(system.metrics?.cpu_usage || 0) >= 70 && (system.metrics?.cpu_usage || 0) < 90"
+                             [class.bg-red-500]="(system.metrics?.cpu_usage || 0) >= 90"
+                             [style.width.%]="system.metrics?.cpu_usage || 0">
+                        </div>
+                      </div>
+                    </div>
+                    <span class="text-xs text-gray-600 min-w-[2.5rem] text-right">
+                      {{ system.metrics?.cpu_usage || 0 | number:'1.0-0' }}%
+                    </span>
+                  </div>
+                </td>
+                <td class="px-8 py-4 whitespace-nowrap">
+                  <div class="flex items-center gap-2">
+                    <div class="flex-1 w-16">
+                      <div class="w-full bg-gray-100 h-1">
+                        <div class="h-1 transition-all"
+                             [class.bg-green-500]="(system.metrics?.memory_usage || 0) < 70"
+                             [class.bg-yellow-500]="(system.metrics?.memory_usage || 0) >= 70 && (system.metrics?.memory_usage || 0) < 90"
+                             [class.bg-red-500]="(system.metrics?.memory_usage || 0) >= 90"
+                             [style.width.%]="system.metrics?.memory_usage || 0">
+                        </div>
+                      </div>
+                    </div>
+                    <span class="text-xs text-gray-600 min-w-[2.5rem] text-right">
+                      {{ system.metrics?.memory_usage || 0 | number:'1.0-0' }}%
+                    </span>
+                  </div>
+                </td>
+                <td class="px-8 py-4 whitespace-nowrap">
+                  <div class="flex items-center gap-2">
+                    <div class="flex-1 w-16">
+                      <div class="w-full bg-gray-100 h-1">
+                        <div class="h-1 transition-all"
+                             [class.bg-green-500]="(system.metrics?.disk_usage || 0) < 70"
+                             [class.bg-yellow-500]="(system.metrics?.disk_usage || 0) >= 70 && (system.metrics?.disk_usage || 0) < 90"
+                             [class.bg-red-500]="(system.metrics?.disk_usage || 0) >= 90"
+                             [style.width.%]="system.metrics?.disk_usage || 0">
+                        </div>
+                      </div>
+                    </div>
+                    <span class="text-xs text-gray-600 min-w-[2.5rem] text-right">
+                      {{ system.metrics?.disk_usage || 0 | number:'1.0-0' }}%
+                    </span>
+                  </div>
+                </td>
+              </tr>
+              <tr *ngIf="systems.length === 0">
+                <td colspan="8" class="px-8 py-12 text-center">
+                  <p class="text-sm text-gray-400">No hay sistemas monitoreados</p>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </ng-container>
+  </div>
+</div>
+
+<!-- Add System Dialog -->
+<app-add-system-dialog 
+  *ngIf="showAddDialog"
+  (close)="closeAddDialog()"
+  (systemAdded)="onSystemAdded($event)">
+</app-add-system-dialog>

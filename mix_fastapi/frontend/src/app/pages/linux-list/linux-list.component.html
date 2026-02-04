@@ -1,53 +1,223 @@
-<app-layout>
-  <div class="space-y-6">
-    <div class="flex items-center justify-between">
-      <div>
-        <h1 class="text-2xl font-bold text-red-700">Servidores Linux</h1>
-        <p class="text-red-500 mt-1">Gestión de servidores Linux RHEL</p>
+<!-- Professional Linux Servers List -->
+<div class="min-h-screen bg-gradient-to-br from-slate-50 via-gray-50 to-slate-100">
+  <!-- Header Section -->
+  <div class="bg-gradient-to-r from-slate-800 via-slate-700 to-slate-800 shadow-lg">
+    <div class="max-w-[1920px] mx-auto px-6 py-5">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center space-x-4">
+          <div class="flex items-center justify-center w-12 h-12 bg-orange-500 rounded-xl shadow-lg">
+            <svg class="w-7 h-7 text-white" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M12.504 0c-.155 0-.315.008-.48.021-4.226.333-3.105 4.807-3.17 6.298-.076 1.092-.3 1.953-1.05 3.02-.885 1.051-2.127 2.75-2.716 4.521-.278.832-.41 1.684-.287 2.489.035.218.094.44.177.663.027.073.060.146.097.219.002.006.005.011.007.017.145.344.335.664.573.96.01.013.022.023.033.036.279.339.596.655.936.933.01.008.018.017.027.025.463.373.970.695 1.512.964.024.012.049.023.075.033 1.289.571 2.71.912 4.246.912.278 0 .552-.018.821-.042.023-.002.045-.005.068-.008.394-.045.778-.118 1.148-.218.003 0 .006-.002.009-.003.914-.245 1.743-.604 2.461-1.039l.144-.09c.667-.43 1.233-.938 1.688-1.508.025-.03.047-.062.07-.092.275-.344.512-.705.707-1.084l.104-.206c.096-.188.178-.38.249-.577.004-.012.01-.023.014-.036.139-.352.249-.714.328-1.084.004-.019.01-.037.013-.056.033-.15.061-.303.084-.457.007-.047.014-.095.019-.142.028-.219.044-.442.048-.665.001-.017.003-.032.004-.05 0-.031.002-.062.003-.093.001-.078.003-.156.003-.234 0-5.003-4.029-9.032-9.032-9.032zm-.174 1.992c-.035 0-.069.002-.103.006-1.592.127-1.171 1.813-1.195 2.376-.028.411-.113.736-.396 1.138-.334.396-.802 1.036-1.024 1.705-.105.314-.155.636-.108.939.013.082.035.166.067.251l.037.083c.055.13.127.251.216.363l.012.013c.105.128.225.247.353.352l.010.009c.175.141.366.263.57.364l.028.012c.486.215 1.022.344 1.603.344.105 0 .208-.007.31-.016l.026-.003c.149-.017.294-.044.434-.082l.003-.001c.345-.092.657-.228.929-.392l.054-.034c.252-.162.465-.354.636-.569l.026-.035c.104-.13.193-.267.267-.409l.039-.078c.036-.071.067-.144.094-.218l.005-.014c.052-.133.094-.270.124-.409l.005-.021c.012-.057.023-.115.032-.172l.007-.054c.010-.083.016-.167.018-.251l.002-.019c0-.012.001-.023.001-.035 0-.029.001-.059.001-.089 0-1.889-1.521-3.41-3.41-3.41z"/>
+            </svg>
+          </div>
+          <div>
+            <h1 class="text-2xl font-bold text-white tracking-tight">Servidores Linux</h1>
+            <p class="text-sm text-slate-300 mt-0.5">Gestión y monitoreo de Linux RHEL</p>
+          </div>
+        </div>
+        <button 
+          (click)="openAddDialog()"
+          class="inline-flex items-center px-5 py-2.5 bg-orange-600 hover:bg-orange-700 text-white text-sm font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-200">
+          <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+          </svg>
+          Agregar Servidor
+        </button>
       </div>
-      <button 
-        (click)="openAddDialog()"
-        class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-600 transition-colors">
-        <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-        </svg>
-        Agregar Servidor Linux
-      </button>
-    </div>
-
-    <app-loader *ngIf="isLoading"></app-loader>
-
-    <div *ngIf="!isLoading" class="bg-white border-2 border-red-100 rounded-lg shadow-sm overflow-hidden">
-      <table class="min-w-full divide-y divide-red-100">
-        <thead class="bg-red-50">
-          <tr>
-            <th class="px-6 py-3 text-left text-xs font-medium text-red-700 uppercase tracking-wider">Nombre</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-red-700 uppercase tracking-wider">Dirección IP</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-red-700 uppercase tracking-wider">Versión</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-red-700 uppercase tracking-wider">Estado</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-red-700 uppercase tracking-wider">Última Conexión</th>
-          </tr>
-        </thead>
-        <tbody class="bg-white divide-y divide-red-50">
-          <tr *ngFor="let system of systems" class="hover:bg-red-50 transition-colors">
-            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ system.name }}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{{ system.ip_address }}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{{ system.version || 'N/A' }}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-              <app-status-badge [status]="system.status"></app-status-badge>
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{{ system.last_seen | date:'short' }}</td>
-          </tr>
-        </tbody>
-      </table>
     </div>
   </div>
 
-  <!-- Add System Dialog -->
-  <app-add-system-dialog
-    *ngIf="showAddDialog"
-    [defaultType]="'linux'"
-    (close)="showAddDialog = false"
-    (systemAdded)="onSystemAdded()">
-  </app-add-system-dialog>
-</app-layout>
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="flex items-center justify-center h-96">
+    <div class="text-center">
+      <div class="inline-block animate-spin rounded-full h-16 w-16 border-4 border-slate-300 border-t-orange-600 mb-4"></div>
+      <p class="text-slate-600 font-medium">Cargando servidores Linux...</p>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div *ngIf="!isLoading" class="max-w-[1920px] mx-auto px-6 py-6">
+    
+    <!-- Stats Overview -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mb-6">
+      <div class="bg-white rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 border border-slate-200 overflow-hidden">
+        <div class="p-6">
+          <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center space-x-3">
+              <div class="flex items-center justify-center w-12 h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl shadow-lg">
+                <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12.504 0c-.155 0-.315.008-.48.021-4.226.333-3.105 4.807-3.17 6.298-.076 1.092-.3 1.953-1.05 3.02-.885 1.051-2.127 2.75-2.716 4.521-.278.832-.41 1.684-.287 2.489.035.218.094.44.177.663.027.073.060.146.097.219.002.006.005.011.007.017.145.344.335.664.573.96.01.013.022.023.033.036.279.339.596.655.936.933.01.008.018.017.027.025.463.373.970.695 1.512.964.024.012.049.023.075.033 1.289.571 2.71.912 4.246.912.278 0 .552-.018.821-.042.023-.002.045-.005.068-.008.394-.045.778-.118 1.148-.218.003 0 .006-.002.009-.003.914-.245 1.743-.604 2.461-1.039l.144-.09c.667-.43 1.233-.938 1.688-1.508.025-.03.047-.062.07-.092.275-.344.512-.705.707-1.084l.104-.206c.096-.188.178-.38.249-.577.004-.012.01-.023.014-.036.139-.352.249-.714.328-1.084.004-.019.01-.037.013-.056.033-.15.061-.303.084-.457.007-.047.014-.095.019-.142.028-.219.044-.442.048-.665.001-.017.003-.032.004-.05 0-.031.002-.062.003-.093.001-.078.003-.156.003-.234 0-5.003-4.029-9.032-9.032-9.032zm-.174 1.992c-.035 0-.069.002-.103.006-1.592.127-1.171 1.813-1.195 2.376-.028.411-.113.736-.396 1.138-.334.396-.802 1.036-1.024 1.705-.105.314-.155.636-.108.939.013.082.035.166.067.251l.037.083c.055.13.127.251.216.363l.012.013c.105.128.225.247.353.352l.010.009c.175.141.366.263.57.364l.028.012c.486.215 1.022.344 1.603.344.105 0 .208-.007.31-.016l.026-.003c.149-.017.294-.044.434-.082l.003-.001c.345-.092.657-.228.929-.392l.054-.034c.252-.162.465-.354.636-.569l.026-.035c.104-.13.193-.267.267-.409l.039-.078c.036-.071.067-.144.094-.218l.005-.014c.052-.133.094-.270.124-.409l.005-.021c.012-.057.023-.115.032-.172l.007-.054c.010-.083.016-.167.018-.251l.002-.019c0-.012.001-.023.001-.035 0-.029.001-.059.001-.089 0-1.889-1.521-3.41-3.41-3.41z"/>
+                </svg>
+              </div>
+              <div>
+                <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Servidores</p>
+                <p class="text-3xl font-bold text-slate-800 mt-1">{{ systems.length }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="h-1 bg-gradient-to-r from-orange-500 to-orange-600"></div>
+      </div>
+
+      <div class="bg-white rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 border border-slate-200 overflow-hidden">
+        <div class="p-6">
+          <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center space-x-3">
+              <div class="flex items-center justify-center w-12 h-12 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl shadow-lg">
+                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <div>
+                <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">En Línea</p>
+                <p class="text-3xl font-bold text-slate-800 mt-1">{{ onlineCount }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="h-1 bg-gradient-to-r from-emerald-500 to-emerald-600"></div>
+      </div>
+
+      <div class="bg-white rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 border border-slate-200 overflow-hidden">
+        <div class="p-6">
+          <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center space-x-3">
+              <div class="flex items-center justify-center w-12 h-12 bg-gradient-to-br from-amber-500 to-amber-600 rounded-xl shadow-lg">
+                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+              </div>
+              <div>
+                <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Con Problemas</p>
+                <p class="text-3xl font-bold text-slate-800 mt-1">{{ problemCount }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="h-1 bg-gradient-to-r from-amber-500 to-amber-600"></div>
+      </div>
+    </div>
+
+    <!-- Systems Table -->
+    <div class="bg-white rounded-2xl shadow-md border border-slate-200 overflow-hidden">
+      <div class="bg-gradient-to-r from-slate-700 to-slate-800 px-6 py-4">
+        <div class="flex items-center justify-between">
+          <h3 class="text-lg font-bold text-white">Servidores Linux RHEL</h3>
+          <span class="text-sm text-slate-300">{{ systems.length }} servidores registrados</span>
+        </div>
+      </div>
+      
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-slate-200">
+          <thead class="bg-slate-50">
+            <tr>
+              <th class="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">Sistema</th>
+              <th class="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">IP Address</th>
+              <th class="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">Versión</th>
+              <th class="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">Estado</th>
+              <th class="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">CPU</th>
+              <th class="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">Memoria</th>
+              <th class="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">Disco</th>
+              <th class="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">Última Conexión</th>
+            </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-slate-100">
+            <tr *ngFor="let system of systems" 
+                (click)="viewDetail(system.id)"
+                class="hover:bg-slate-50 transition-colors cursor-pointer">
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="flex items-center">
+                  <div class="flex-shrink-0 h-10 w-10 flex items-center justify-center rounded-lg bg-orange-100">
+                    <svg class="w-5 h-5 text-orange-600" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M12.504 0c-.155 0-.315.008-.48.021-4.226.333-3.105 4.807-3.17 6.298-.076 1.092-.3 1.953-1.05 3.02-.885 1.051-2.127 2.75-2.716 4.521-.278.832-.41 1.684-.287 2.489.035.218.094.44.177.663.027.073.060.146.097.219.002.006.005.011.007.017.145.344.335.664.573.96.01.013.022.023.033.036.279.339.596.655.936.933.01.008.018.017.027.025.463.373.970.695 1.512.964.024.012.049.023.075.033 1.289.571 2.71.912 4.246.912.278 0 .552-.018.821-.042.023-.002.045-.005.068-.008.394-.045.778-.118 1.148-.218.003 0 .006-.002.009-.003.914-.245 1.743-.604 2.461-1.039l.144-.09c.667-.43 1.233-.938 1.688-1.508.025-.03.047-.062.07-.092.275-.344.512-.705.707-1.084l.104-.206c.096-.188.178-.38.249-.577.004-.012.01-.023.014-.036.139-.352.249-.714.328-1.084.004-.019.01-.037.013-.056.033-.15.061-.303.084-.457.007-.047.014-.095.019-.142.028-.219.044-.442.048-.665.001-.017.003-.032.004-.05 0-.031.002-.062.003-.093.001-.078.003-.156.003-.234 0-5.003-4.029-9.032-9.032-9.032zm-.174 1.992c-.035 0-.069.002-.103.006-1.592.127-1.171 1.813-1.195 2.376-.028.411-.113.736-.396 1.138-.334.396-.802 1.036-1.024 1.705-.105.314-.155.636-.108.939.013.082.035.166.067.251l.037.083c.055.13.127.251.216.363l.012.013c.105.128.225.247.353.352l.010.009c.175.141.366.263.57.364l.028.012c.486.215 1.022.344 1.603.344.105 0 .208-.007.31-.016l.026-.003c.149-.017.294-.044.434-.082l.003-.001c.345-.092.657-.228.929-.392l.054-.034c.252-.162.465-.354.636-.569l.026-.035c.104-.13.193-.267.267-.409l.039-.078c.036-.071.067-.144.094-.218l.005-.014c.052-.133.094-.270.124-.409l.005-.021c.012-.057.023-.115.032-.172l.007-.054c.010-.083.016-.167.018-.251l.002-.019c0-.012.001-.023.001-.035 0-.029.001-.059.001-.089 0-1.889-1.521-3.41-3.41-3.41z"/>
+                    </svg>
+                  </div>
+                  <div class="ml-4">
+                    <div class="text-sm font-bold text-slate-900">{{ system.name }}</div>
+                    <div class="text-xs text-slate-500">{{ system.description }}</div>
+                  </div>
+                </div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <span class="text-sm font-mono text-slate-700 bg-slate-100 px-2 py-1 rounded">{{ system.ip_address }}</span>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-700">
+                {{ system.version || 'N/A' }}
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <span class="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold"
+                      [class.bg-emerald-100]="system.status === 'online'"
+                      [class.text-emerald-800]="system.status === 'online'"
+                      [class.bg-amber-100]="system.status === 'warning'"
+                      [class.text-amber-800]="system.status === 'warning'"
+                      [class.bg-red-100]="system.status === 'offline'"
+                      [class.text-red-800]="system.status === 'offline'">
+                  <span class="w-2 h-2 rounded-full mr-2"
+                        [class.bg-emerald-500]="system.status === 'online'"
+                        [class.bg-amber-500]="system.status === 'warning'"
+                        [class.bg-red-500]="system.status === 'offline'"
+                        [class.animate-pulse]="system.status === 'online'"></span>
+                  {{ system.status === 'online' ? 'En línea' : system.status === 'warning' ? 'Advertencia' : 'Fuera de línea' }}
+                </span>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="flex items-center space-x-2">
+                  <div class="flex-1 w-20 bg-slate-100 rounded-full h-2 overflow-hidden">
+                    <div class="h-2 rounded-full transition-all"
+                         [class.bg-green-500]="system.metrics && system.metrics.cpu_usage < 50"
+                         [class.bg-amber-500]="system.metrics && system.metrics.cpu_usage >= 50 && system.metrics.cpu_usage < 80"
+                         [class.bg-red-500]="system.metrics && system.metrics.cpu_usage >= 80"
+                         [style.width.%]="system.metrics?.cpu_usage || 0">
+                    </div>
+                  </div>
+                  <span class="text-sm font-bold text-slate-700 w-10 text-right">{{ system.metrics?.cpu_usage || 0 }}%</span>
+                </div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="flex items-center space-x-2">
+                  <div class="flex-1 w-20 bg-slate-100 rounded-full h-2 overflow-hidden">
+                    <div class="h-2 rounded-full transition-all"
+                         [class.bg-green-500]="system.metrics && system.metrics.memory_usage < 60"
+                         [class.bg-amber-500]="system.metrics && system.metrics.memory_usage >= 60 && system.metrics.memory_usage < 85"
+                         [class.bg-red-500]="system.metrics && system.metrics.memory_usage >= 85"
+                         [style.width.%]="system.metrics?.memory_usage || 0">
+                    </div>
+                  </div>
+                  <span class="text-sm font-bold text-slate-700 w-10 text-right">{{ system.metrics?.memory_usage || 0 }}%</span>
+                </div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="flex items-center space-x-2">
+                  <div class="flex-1 w-20 bg-slate-100 rounded-full h-2 overflow-hidden">
+                    <div class="h-2 rounded-full transition-all"
+                         [class.bg-green-500]="system.metrics && system.metrics.disk_usage < 70"
+                         [class.bg-amber-500]="system.metrics && system.metrics.disk_usage >= 70 && system.metrics.disk_usage < 90"
+                         [class.bg-red-500]="system.metrics && system.metrics.disk_usage >= 90"
+                         [style.width.%]="system.metrics?.disk_usage || 0">
+                    </div>
+                  </div>
+                  <span class="text-sm font-bold text-slate-700 w-10 text-right">{{ system.metrics?.disk_usage || 0 }}%</span>
+                </div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-600">
+                {{ system.last_seen | date:'dd/MM/yyyy HH:mm' }}
+              </td>
+            </tr>
+            <tr *ngIf="systems.length === 0">
+              <td colspan="8" class="px-6 py-16 text-center">
+                <div class="flex flex-col items-center justify-center">
+                  <svg class="w-20 h-20 text-slate-300 mb-4" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12.504 0c-.155 0-.315.008-.48.021-4.226.333-3.105 4.807-3.17 6.298-.076 1.092-.3 1.953-1.05 3.02-.885 1.051-2.127 2.75-2.716 4.521-.278.832-.41 1.684-.287 2.489.035.218.094.44.177.663.027.073.060.146.097.219.002.006.005.011.007.017.145.344.335.664.573.96.01.013.022.023.033.036.279.339.596.655.936.933.01.008.018.017.027.025.463.373.970.695 1.512.964.024.012.049.023.075.033 1.289.571 2.71.912 4.246.912.278 0 .552-.018.821-.042.023-.002.045-.005.068-.008.394-.045.778-.118 1.148-.218.003 0 .006-.002.009-.003.914-.245 1.743-.604 2.461-1.039l.144-.09c.667-.43 1.233-.938 1.688-1.508.025-.03.047-.062.07-.092.275-.344.512-.705.707-1.084l.104-.206c.096-.188.178-.38.249-.577.004-.012.01-.023.014-.036.139-.352.249-.714.328-1.084.004-.019.01-.037.013-.056.033-.15.061-.303.084-.457.007-.047.014-.095.019-.142.028-.219.044-.442.048-.665.001-.017.003-.032.004-.05 0-.031.002-.062.003-.093.001-.078.003-.156.003-.234 0-5.003-4.029-9.032-9.032-9.032zm-.174 1.992c-.035 0-.069.002-.103.006-1.592.127-1.171 1.813-1.195 2.376-.028.411-.113.736-.396 1.138-.334.396-.802 1.036-1.024 1.705-.105.314-.155.636-.108.939.013.082.035.166.067.251l.037.083c.055.13.127.251.216.363l.012.013c.105.128.225.247.353.352l.010.009c.175.141.366.263.57.364l.028.012c.486.215 1.022.344 1.603.344.105 0 .208-.007.31-.016l.026-.003c.149-.017.294-.044.434-.082l.003-.001c.345-.092.657-.228.929-.392l.054-.034c.252-.162.465-.354.636-.569l.026-.035c.104-.13.193-.267.267-.409l.039-.078c.036-.071.067-.144.094-.218l.005-.014c.052-.133.094-.270.124-.409l.005-.021c.012-.057.023-.115.032-.172l.007-.054c.010-.083.016-.167.018-.251l.002-.019c0-.012.001-.023.001-.035 0-.029.001-.059.001-.089 0-1.889-1.521-3.41-3.41-3.41z"/>
+                  </svg>
+                  <p class="text-xl font-bold text-slate-500 mb-2">No hay servidores Linux</p>
+                  <p class="text-sm text-slate-400">Agregue su primer servidor para comenzar el monitoreo</p>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>

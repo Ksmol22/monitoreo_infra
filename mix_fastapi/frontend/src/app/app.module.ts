@@ -27,6 +27,9 @@ import { DatabaseListComponent } from './pages/database-list/database-list.compo
 import { WindowsListComponent } from './pages/windows-list/windows-list.component';
 import { LinuxListComponent } from './pages/linux-list/linux-list.component';
 import { LogsComponent } from './pages/logs/logs.component';
+import { WindowsDetailComponent } from './pages/windows-detail/windows-detail.component';
+import { LinuxDetailComponent } from './pages/linux-detail/linux-detail.component';
+import { DatabaseDetailComponent } from './pages/database-detail/database-detail.component';
 import { NotFoundComponent } from './pages/not-found/not-found.component';
 
 @NgModule({
@@ -42,6 +45,9 @@ import { NotFoundComponent } from './pages/not-found/not-found.component';
     WindowsListComponent,
     LinuxListComponent,
     LogsComponent,
+    WindowsDetailComponent,
+    LinuxDetailComponent,
+    DatabaseDetailComponent,
     NotFoundComponent
   ],
   imports: [
