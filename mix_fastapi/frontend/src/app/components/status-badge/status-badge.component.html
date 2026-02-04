@@ -1,0 +1,10 @@
+<span [class]="badgeClass">
+  <svg class="mr-1.5 h-2 w-2" 
+       [class.text-green-400]="status === 'online'"
+       [class.text-red-400]="status === 'offline'"
+       [class.text-yellow-400]="status === 'warning'"
+       fill="currentColor" viewBox="0 0 8 8">
+    <circle cx="4" cy="4" r="3" />
+  </svg>
+  {{ displayText }}
+</span>

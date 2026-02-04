@@ -1,123 +1,152 @@
-# Frontend Vue 3 - SPA
+# Frontend Angular 18 - Monitoreo de Infraestructura
 
-Frontend moderno con Vue 3, TypeScript y Tailwind CSS.
+Frontend moderno con Angular 18, TypeScript y Tailwind CSS. Interfaz completamente en español con tema corporativo rojo/blanco.
+
+> ✅ **Proyecto Limpio**: Solo contiene código Angular. Todo el código Vue y React ha sido eliminado.
 
 ## 📁 Estructura
 
 ```
 frontend/src/
-├── components/         # Componentes reutilizables (futuro)
-├── views/              # Páginas/vistas principales
-│   ├── Dashboard.vue   # Dashboard principal
-│   ├── Systems.vue     # Lista de sistemas
-│   └── Logs.vue        # Vista de logs
-├── services/           # Servicios de API
-│   └── api.ts          # Cliente Axios + endpoints
-├── types/              # TypeScript types
-│   └── index.ts        # Interfaces y types
-├── router.ts           # Vue Router configuración
-├── App.vue             # Componente raíz
-├── main.ts             # Entry point
+├── app/
+│   ├── components/         # Componentes Angular reutilizables
+│   │   ├── layout/        # Navegación principal
+│   │   ├── loader/        # Spinner de carga
+│   │   ├── metric-card/   # Tarjetas de métricas
+│   │   ├── status-badge/  # Badges de estado
+│   │   └── add-system-dialog/  # Formulario de sistemas
+│   ├── pages/             # Páginas principales
+│   │   ├── dashboard/     # Panel de control
+│   │   ├── database-list/ # Lista de bases de datos
+│   │   ├── linux-list/    # Lista de servidores RHEL
+│   │   ├── windows-list/  # Lista de servidores Windows
+│   │   ├── logs/          # Vista de logs
+│   │   └── not-found/     # Página 404
+│   ├── services/          # Servicios Angular
+│   │   ├── api.service.ts        # Cliente HTTP base
+│   │   ├── systems.service.ts    # Gestión de sistemas
+│   │   ├── metrics.service.ts    # Métricas
+│   │   ├── logs.service.ts       # Logs
+│   │   └── dashboard.service.ts  # Dashboard stats
+│   ├── models/            # Interfaces TypeScript
+│   │   └── index.ts       # Interfaces del sistema
+│   ├── environments/      # Variables de entorno
+│   ├── app.module.ts      # Módulo principal
+│   ├── app.component.ts   # Componente raíz
+│   └── app-routing.module.ts  # Configuración de rutas
+├── index.css              # Estilos globales + Tailwind
+└── main.ts                # Bootstrap de Angular
 └── style.css           # Estilos globales (Tailwind)
 ```
 
 ## 🚀 Stack Tecnológico
 
-- **Vue 3** - Framework reactivo
+- **Angular 18** - Framework frontend
 - **TypeScript** - Type safety
-- **Vue Router** - Routing
-- **TanStack Query** - Data fetching y caching
-- **Axios** - HTTP client
+- **Angular Router** - Sistema de rutas
+- **RxJS** - Programación reactiva
+- **HttpClient** - Cliente HTTP con interceptors
 - **Tailwind CSS** - Utility-first CSS
-- **Vite** - Build tool y dev server
+- **Angular CLI** - Build tool y dev server
 
-## 🎯 Características
+## 🎨 Características de Diseño
 
-### Data Fetching
-- ✅ TanStack Query para caching inteligente
-- ✅ Refetch automático cada 30 segundos
-- ✅ Loading states
-- ✅ Error handling
+### Tema Corporativo
+- ✅ Colores corporativos rojo (#dc2626) y blanco
+- ✅ Gradientes personalizados
+- ✅ Componentes reutilizables estilizados
+- ✅ Diseño responsive y mobile-friendly
+
+### Funcionalidad
+- ✅ Interfaz 100% en español
+- ✅ Formularios reactivos con validación
+- ✅ Servicios HTTP con manejo de errores
+- ✅ Loading states y spinners
+- ✅ Routing dinámico
 
 ### UI/UX
 - ✅ Design system con Tailwind CSS
 - ✅ Responsive design
-- ✅ Loading spinners
+- ✅ Loading spinners corporativos
 - ✅ Status badges (online, offline, warning)
-- ✅ Log level indicators (info, warning, error)
+- ✅ Tarjetas con gradientes y efectos hover
+- ✅ Navegación con iconos SVG
 
 ### Type Safety
-- ✅ TypeScript en todos los archivos
+- ✅ TypeScript estricto en todos los archivos
 - ✅ Interfaces para System, Metric, Log
-- ✅ Type-safe API calls
+- ✅ Servicios tipados con genéricos
 
-## 📡 Servicios de API
+## 📡 Servicios Angular
 
-### API Client (src/services/api.ts)
+### API Service (src/app/services/api.service.ts)
 
 ```typescript
-import axios from 'axios'
+import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { environment } from '../environments/environment';
 
-const API_URL = import.meta.env.VITE_API_URL
-
-const api = axios.create({
-  baseURL: API_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
+@Injectable({
+  providedIn: 'root'
 })
+export class ApiService {
+  private baseUrl = environment.apiUrl;
 
-// Interceptores para JWT
-api.interceptors.request.use(config => {
-  const token = localStorage.getItem('access_token')
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`
+  constructor(private http: HttpClient) {}
+
+  get<T>(endpoint: string): Observable<T> {
+    return this.http.get<T>(`${this.baseUrl}${endpoint}`);
   }
+
+  post<T>(endpoint: string, body: any): Observable<T> {
+    return this.http.post<T>(`${this.baseUrl}${endpoint}`, body);
+  }
+}
   return config
 })
 ```
 
-### Endpoints Disponibles
+### Servicios Disponibles
 
 ```typescript
-// Systems
-systemsApi.getAll()
-systemsApi.getById(id)
-systemsApi.create(data)
-systemsApi.update(id, data)
-systemsApi.delete(id)
+// SystemsService
+systemsService.getAll(): Observable<System[]>
+systemsService.getById(id): Observable<System>
+systemsService.create(data): Observable<System>
+systemsService.update(id, data): Observable<System>
+systemsService.delete(id): Observable<void>
 
-// Metrics
-metricsApi.getAll(params)
-metricsApi.getLatest()
-metricsApi.create(data)
-metricsApi.bulkCreate(data)
+// MetricsService
+metricsService.getAll(params): Observable<Metric[]>
+metricsService.getLatest(): Observable<Metric[]>
+metricsService.create(data): Observable<Metric>
 
-// Logs
-logsApi.getAll(params)
-logsApi.getRecent()
-logsApi.create(data)
+// LogsService
+logsService.getAll(params): Observable<Log[]>
+logsService.getRecent(): Observable<Log[]>
+logsService.create(data): Observable<Log>
 
-// Dashboard
-dashboardApi.getStats()
+// DashboardService
+dashboardService.getStats(): Observable<DashboardStats>
 ```
 
-## 🎨 Componentes
+## 🎨 Componentes Angular
 
-### Dashboard.vue
-- Stats cards (total, online, warnings, offline)
-- Recent logs table
-- Auto-refresh cada 30 segundos
+### DashboardComponent
+- Tarjetas de estadísticas con gradientes
+- Tarjetas clicables por tipo de sistema
+- Tabla de sistemas recientes
+- Modal para agregar sistemas
 
-### Systems.vue
-- Lista de todos los sistemas
-- Filtros por tipo
-- Status badges
-- Links a detalles
+### DatabaseListComponent
+- Lista de bases de datos
+- Filtros y búsqueda
+- Estados visuales con badges
 
-### Logs.vue
-- Lista de logs
-- Filtros por level
+### LinuxListComponent / WindowsListComponent
+- Listas específicas por tipo
+- Información detallada de servidores
 - Color-coded por severidad
 - Auto-refresh cada 15 segundos
 
@@ -138,37 +167,52 @@ VITE_API_URL=http://localhost:8000/api
 npm install
 
 # Dev server (con hot reload)
-npm run dev
-# → http://localhost:3000
+npm start
+# → http://localhost:4200
 
 # Build para producción
 npm run build
 
-# Preview de producción
-npm run preview
+# Watch mode para desarrollo
+npm run watch
+
+# Tests
+npm run test
 ```
 
-## 📦 Agregar Nuevos Componentes
+## 📦 Agregar Nuevos Componentes Angular
 
-### Ejemplo: MetricCard Component
+### Ejemplo: Generar componente
 
-```vue
-<!-- src/components/MetricCard.vue -->
-<template>
-  <div class="bg-white rounded-lg shadow p-6">
-    <div class="flex items-center justify-between">
-      <div>
-        <p class="text-sm text-gray-500">{{ title }}</p>
-        <p class="text-2xl font-bold text-gray-900">{{ value }}</p>
-      </div>
-      <div :class="iconClass">
-        <slot name="icon" />
-      </div>
-    </div>
-  </div>
-</template>
+```bash
+# Generar componente
+ng generate component components/mi-componente
 
-<script setup lang="ts">
+# Generar servicio
+ng generate service services/mi-servicio
+
+# Generar módulo
+ng generate module mi-modulo
+```
+
+### Ejemplo: Componente TypeScript
+
+```typescript
+// src/app/components/metric-card/metric-card.component.ts
+import { Component, Input } from '@angular/core';
+
+@Component({
+  selector: 'app-metric-card',
+  templateUrl: './metric-card.component.html',
+  styleUrls: ['./metric-card.component.css']
+})
+export class MetricCardComponent {
+  @Input() title: string = '';
+  @Input() value: string | number = '';
+  @Input() subtitle?: string;
+  @Input() trend?: 'up' | 'down';
+  @Input() trendValue?: string;
+}
 defineProps<{
   title: string
   value: string | number

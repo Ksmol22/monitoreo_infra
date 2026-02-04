@@ -1,0 +1,244 @@
+---
+# ============================================
+# INVENTARIO DE EJEMPLO CON CONFIGURACIÓN COMPLETA
+# ============================================
+# 
+# 📝 INSTRUCCIONES:
+# 1. Copia este archivo a hosts.yml
+# 2. Reemplaza las IPs y credenciales con tus datos reales
+# 3. Elimina los sistemas que no tengas
+# 4. Guarda las contraseñas en vault (ver README)
+
+all:
+  children:
+    # ═══════════════════════════════════════
+    # 🐧 SERVIDORES LINUX (RHEL/CentOS)
+    # ═══════════════════════════════════════
+    linux:
+      hosts:
+        # Servidor Linux de producción
+        prod-rhel-web-01:
+          ansible_host: 192.168.1.100
+          ansible_user: ansible
+          ansible_port: 22
+          ansible_connection: ssh
+          ansible_python_interpreter: /usr/bin/python3
+          ansible_ssh_private_key_file: ~/.ssh/id_ed25519
+          
+          # Metadatos adicionales
+          environment: production
+          role: webserver
+          datacenter: dc1
+        
+        # Servidor Linux de desarrollo
+        dev-centos-app-01:
+          ansible_host: 192.168.1.101
+          ansible_user: ansible
+          ansible_port: 22
+          ansible_connection: ssh
+          ansible_python_interpreter: /usr/bin/python3
+          
+          environment: development
+          role: application
+          datacenter: dc1
+        
+        # Servidor RHEL con usuario personalizado
+        # rhel-backup-01:
+        #   ansible_host: 192.168.1.102
+        #   ansible_user: monitoring
+        #   ansible_port: 2222
+        #   ansible_connection: ssh
+        #   ansible_python_interpreter: /usr/bin/python3
+        #   ansible_ssh_pass: "{{ vault_rhel_backup_password }}"
+        #   environment: production
+        #   role: backup
+      
+      # Variables comunes para todos los Linux
+      vars:
+        ansible_ssh_common_args: '-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'
+    
+    # ═══════════════════════════════════════
+    # 🪟 SERVIDORES WINDOWS
+    # ═══════════════════════════════════════
+    windows:
+      hosts:
+        # Windows Server con WinRM HTTPS
+        prod-win-sql-01:
+          ansible_host: 192.168.1.200
+          ansible_user: Administrator
+          ansible_password: "{{ vault_windows_admin_password }}"
+          ansible_connection: winrm
+          ansible_winrm_server_cert_validation: ignore
+          ansible_winrm_transport: ntlm
+          ansible_port: 5986
+          ansible_winrm_scheme: https
+          
+          environment: production
+          role: database_server
+          datacenter: dc1
+          windows_version: "2022"
+        
+        # Windows Server con autenticación básica
+        dev-win-app-01:
+          ansible_host: 192.168.1.201
+          ansible_user: ansible_service
+          ansible_password: "{{ vault_windows_service_password }}"
+          ansible_connection: winrm
+          ansible_winrm_server_cert_validation: ignore
+          ansible_winrm_transport: basic
+          ansible_port: 5986
+          
+          environment: development
+          role: application_server
+          datacenter: dc1
+        
+        # Windows Server con CredSSP (más seguro)
+        # prod-win-web-01:
+        #   ansible_host: 192.168.1.202
+        #   ansible_user: domain\administrator
+        #   ansible_password: "{{ vault_domain_admin_password }}"
+        #   ansible_connection: winrm
+        #   ansible_winrm_transport: credssp
+        #   ansible_port: 5986
+        #   environment: production
+        #   role: webserver
+      
+      # Variables comunes para todos los Windows
+      vars:
+        ansible_winrm_read_timeout_sec: 60
+        ansible_winrm_operation_timeout_sec: 55
+    
+    # ═══════════════════════════════════════
+    # 🗄️ BASES DE DATOS
+    # ═══════════════════════════════════════
+    databases:
+      hosts:
+        # PostgreSQL en Linux
+        prod-postgres-01:
+          ansible_host: 192.168.1.300
+          ansible_user: ansible
+          ansible_port: 22
+          ansible_connection: ssh
+          ansible_python_interpreter: /usr/bin/python3
+          
+          # Configuración de base de datos
+          db_type: postgresql
+          db_port: 5432
+          db_name: production_db
+          db_user: ansible_monitor
+          db_password: "{{ vault_postgres_monitor_password }}"
+          
+          environment: production
+          datacenter: dc1
+        
+        # MySQL en Linux
+        prod-mysql-01:
+          ansible_host: 192.168.1.301
+          ansible_user: ansible
+          ansible_port: 22
+          ansible_connection: ssh
+          
+          db_type: mysql
+          db_port: 3306
+          db_name: myapp_db
+          db_user: monitoring
+          db_password: "{{ vault_mysql_monitor_password }}"
+          
+          environment: production
+          datacenter: dc1
+        
+        # MariaDB
+        # dev-mariadb-01:
+        #   ansible_host: 192.168.1.302
+        #   ansible_user: ansible
+        #   ansible_port: 22
+        #   ansible_connection: ssh
+        #   db_type: mysql
+        #   db_port: 3306
+        #   environment: development
+        
+        # SQL Server en Windows
+        # prod-mssql-01:
+        #   ansible_host: 192.168.1.303
+        #   ansible_connection: winrm
+        #   ansible_user: Administrator
+        #   ansible_password: "{{ vault_windows_admin_password }}"
+        #   ansible_port: 5986
+        #   db_type: mssql
+        #   db_port: 1433
+        #   db_user: sa
+        #   db_password: "{{ vault_mssql_sa_password }}"
+        #   environment: production
+    
+    # ═══════════════════════════════════════
+    # 📦 GRUPOS LÓGICOS ADICIONALES
+    # ═══════════════════════════════════════
+    
+    # Todos los servidores de producción
+    production:
+      children:
+        linux:
+        windows:
+        databases:
+      vars:
+        monitoring_interval: 300  # 5 minutos
+    
+    # Todos los servidores de desarrollo
+    development:
+      children:
+        linux:
+        windows:
+      vars:
+        monitoring_interval: 600  # 10 minutos
+    
+    # Servidores por datacenter
+    datacenter_dc1:
+      children:
+        linux:
+        windows:
+        databases:
+  
+  # ═══════════════════════════════════════
+  # 🌐 VARIABLES GLOBALES
+  # ═══════════════════════════════════════
+  vars:
+    # API del backend
+    api_url: http://localhost:8000/api/v1
+    
+    # Configuración general de Ansible
+    ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
+    
+    # Timeout
+    ansible_command_timeout: 30
+    
+    # Configuración de retry
+    ansible_ssh_retries: 3
+
+# ═══════════════════════════════════════
+# 📋 NOTAS IMPORTANTES
+# ═══════════════════════════════════════
+#
+# SEGURIDAD:
+# - NUNCA pongas contraseñas en texto plano aquí
+# - Usa Ansible Vault: ansible-vault create group_vars/all/vault.yml
+# - Variables con {{ vault_* }} se resuelven desde el vault
+#
+# VARIABLES DE VAULT NECESARIAS:
+# - vault_windows_admin_password
+# - vault_windows_service_password
+# - vault_postgres_monitor_password
+# - vault_mysql_monitor_password
+# - vault_mssql_sa_password
+#
+# EJEMPLOS DE USO:
+# - Todos: ansible all -i hosts.yml -m ping
+# - Linux: ansible linux -i hosts.yml -m shell -a "uptime"
+# - Windows: ansible windows -i hosts.yml -m win_shell -a "Get-Service"
+# - Producción: ansible production -i hosts.yml -m ping
+# - Un servidor: ansible prod-rhel-web-01 -i hosts.yml -m setup
+#
+# PLAYBOOKS:
+# - ansible-playbook -i hosts.yml playbooks/linux_metrics.yml
+# - ansible-playbook -i hosts.yml playbooks/windows_metrics.yml
+# - ansible-playbook -i hosts.yml playbooks/database_metrics.yml
+#

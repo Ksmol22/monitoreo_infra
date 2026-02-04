@@ -1,0 +1,53 @@
+<app-layout>
+  <div class="space-y-6">
+    <div class="flex items-center justify-between">
+      <div>
+        <h1 class="text-2xl font-bold text-red-700">Servidores Windows</h1>
+        <p class="text-red-500 mt-1">Gestión de servidores Windows Server</p>
+      </div>
+      <button 
+        (click)="openAddDialog()"
+        class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-600 transition-colors">
+        <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+        </svg>
+        Agregar Servidor Windows
+      </button>
+    </div>
+
+    <app-loader *ngIf="isLoading"></app-loader>
+
+    <div *ngIf="!isLoading" class="bg-white border-2 border-red-100 rounded-lg shadow-sm overflow-hidden">
+      <table class="min-w-full divide-y divide-red-100">
+        <thead class="bg-red-50">
+          <tr>
+            <th class="px-6 py-3 text-left text-xs font-medium text-red-700 uppercase tracking-wider">Nombre</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-red-700 uppercase tracking-wider">Dirección IP</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-red-700 uppercase tracking-wider">Versión</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-red-700 uppercase tracking-wider">Estado</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-red-700 uppercase tracking-wider">Última Conexión</th>
+          </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-red-50">
+          <tr *ngFor="let system of systems" class="hover:bg-red-50 transition-colors">
+            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ system.name }}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{{ system.ip_address }}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{{ system.version || 'N/A' }}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+              <app-status-badge [status]="system.status"></app-status-badge>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{{ system.last_seen | date:'short' }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Add System Dialog -->
+  <app-add-system-dialog
+    *ngIf="showAddDialog"
+    [defaultType]="'windows'"
+    (close)="showAddDialog = false"
+    (systemAdded)="onSystemAdded()">
+  </app-add-system-dialog>
+</app-layout>

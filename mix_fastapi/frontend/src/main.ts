@@ -1,20 +1,8 @@
-import { createApp } from "vue";
-import { VueQueryPlugin } from "@tanstack/vue-query";
-import { createPinia } from "pinia";
-import PrimeVue from "primevue/config";
-import ToastService from "primevue/toastservice";
-import App from "./App.vue";
-import router from "./router";
-import "./index.css";
-import "primevue/resources/themes/aura-light-blue/theme.css";
+import { platformBrowserDynamic } from '@angular/platform-browser-dynamic';
+import { AppModule } from './app/app.module';
 
-const app = createApp(App);
-const pinia = createPinia();
+platformBrowserDynamic().bootstrapModule(AppModule, {
+  ngZoneEventCoalescing: true
+})
+  .catch(err => console.error(err));
 
-app.use(pinia);
-app.use(router);
-app.use(VueQueryPlugin);
-app.use(PrimeVue);
-app.use(ToastService);
-
-app.mount("#root");

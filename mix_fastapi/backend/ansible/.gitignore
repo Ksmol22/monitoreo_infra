@@ -1,0 +1,62 @@
+# Ansible .gitignore
+
+# Vault password files - NUNCA subir contraseñas!
+.vault_pass
+.vault_password
+vault_pass.txt
+vault-password.txt
+
+# Variables de entorno con credenciales
+.env
+.env.local
+.env.production
+
+# Archivos de Ansible temporales
+*.retry
+*.pyc
+__pycache__/
+.ansible/
+
+# Logs
+logs/
+*.log
+ansible.log
+
+# Archivos de cache
+.cache/
+/tmp/
+ansible_facts/
+
+# Inventario real (contiene IPs privadas)
+# Descomenta si no quieres subir tu inventario:
+# inventory/hosts.yml
+
+# Archivos de backup
+*.bak
+*.backup
+*~
+
+# Certificados y claves privadas
+*.pem
+*.key
+*.crt
+*.pfx
+*.p12
+certificates/
+
+# Archivos de sistema
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# Archivos temporales de Windows
+desktop.ini
+
+# Archivos de VSCode
+.vscode/
+.idea/
+
+# Archivos compilados de Python
+*.py[cod]
+*$py.class
